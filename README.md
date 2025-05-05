@@ -1,11 +1,10 @@
-# Echo Health Check
-
-This project implements a simple health check service using the Echo framework in Go. It provides an endpoint to check the health status of the service.
+# Scale websocet
+----
 
 ## Project Structure
 
 ```
-echo-health-check
+scale-websocket
 ├── cmd
 │   └── server
 │       └── main.go        # Entry point of the application
@@ -27,7 +26,7 @@ echo-health-check
 1. Clone the repository:
    ```
    git clone <repository-url>
-   cd echo-health-check
+   cd scale-websocket
    ```
 
 2. Install the dependencies:
