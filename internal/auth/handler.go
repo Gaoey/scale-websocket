@@ -1,9 +1,8 @@
-package handlers
+package auth
 
 import (
 	"net/http"
 
-	"github.com/Gaoey/scale-websocket/internal/auth"
 	"github.com/labstack/echo/v4"
 )
 
@@ -19,7 +18,7 @@ type LoginResponse struct {
 }
 
 // Login handles user authentication and JWT token generation
-func Login(c echo.Context) error {
+func LoginHandler(c echo.Context) error {
 	// Parse request
 	req := new(LoginRequest)
 	if err := c.Bind(req); err != nil {
@@ -28,14 +27,14 @@ func Login(c echo.Context) error {
 
 	// In a real app, validate credentials against a database
 	// This is just a simple example
-	user, exists := auth.MockUsers[req.Username]
+	user, exists := MockUsers[req.Username]
 	if !exists {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid credentials")
 	}
 
 	if req.Password == user.Password {
 		// Generate JWT token
-		token, err := auth.GenerateToken(user.UserID, req.Username)
+		token, err := GenerateToken(user.UserID, req.Username)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Could not generate token")
 		}

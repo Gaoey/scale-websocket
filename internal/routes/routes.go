@@ -5,7 +5,8 @@ import (
 	"strings"
 
 	"github.com/Gaoey/scale-websocket/internal/auth"
-	"github.com/Gaoey/scale-websocket/internal/handlers"
+	"github.com/Gaoey/scale-websocket/internal/healthcheck"
+	"github.com/Gaoey/scale-websocket/internal/socket"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -14,8 +15,9 @@ func SetupRoutes(e *echo.Echo) {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
-	e.GET("/health", handlers.HealthCheck)
-	e.POST("/login", handlers.Login)
+	e.GET("/health", healthcheck.HealthCheckHandler)
+	e.POST("/login", auth.LoginHandler)
+	e.GET("/ws", socket.WebSocketHandler)
 
 	auth := e.Group("/api")
 	auth.Use(JWTAuth())
