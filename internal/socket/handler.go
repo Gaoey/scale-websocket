@@ -47,7 +47,9 @@ func WebSocketHandler(c echo.Context) error {
 
 	r := c.Request().WithContext(ctx)
 
-	conn, err := websocket.Accept(c.Response().Writer, r, nil)
+	conn, err := websocket.Accept(c.Response().Writer, r, &websocket.AcceptOptions{
+		OriginPatterns: []string{"*"},
+	})
 	if err != nil {
 		log.Println("Accept error:", err)
 		return echo.NewHTTPError(1000, "Cannot connect to WebSocket")
