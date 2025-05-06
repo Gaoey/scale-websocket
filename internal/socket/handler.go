@@ -54,43 +54,28 @@ func WebSocketHandler(c echo.Context) error {
 		log.Println("Accept error:", err)
 		return echo.NewHTTPError(1000, "Cannot connect to WebSocket")
 	}
-	defer conn.Close(websocket.StatusInternalError, "websocket closed unexpectedly")
+	log.Printf("WebSocket connection established for user: %s", claims.Username)
+	defer conn.Close(websocket.StatusNormalClosure, "Connection closed")
+
+	// Set read timeout and message size limit
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	// Handle the authenticated WebSocket connection in a goroutine
-	go handleWebSocketConnection(conn, claims)
+	handleWebSocketConnection(ctx, conn, claims)
 
 	return nil
 }
 
 // handleWebSocketConnection manages an individual WebSocket connection
-func handleWebSocketConnection(conn *websocket.Conn, claims *auth.Claims) {
-	defer conn.Close(websocket.StatusNormalClosure, "Connection closed")
-
+func handleWebSocketConnection(ctx context.Context, conn *websocket.Conn, claims *auth.Claims) {
 	// Send welcome message
-	welcomeMsg := Message{
-		Type: "welcome",
-		Content: map[string]string{
-			"message":  "Successfully connected to secure WebSocket",
-			"username": claims.Username,
-			"userID":   claims.UserID,
-		},
-	}
 
-	result, e := json.Marshal(welcomeMsg)
-	if e != nil {
-		log.Printf("cannot read msg data: %v", e)
-		panic(e)
-	}
-
-	err := conn.Write(context.Background(), websocket.MessageText, result)
+	log.Printf("Sending welcome message to user: %s", claims.Username)
+	err := SendWelcomeMessage(ctx, conn, claims)
 	if err != nil {
-		log.Printf("Error sending welcome message: %v", err)
 		return
 	}
-
-	// Set read timeout and message size limit
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	// Message handling loop
 	for {
@@ -154,4 +139,28 @@ func handleWebSocketConnection(conn *websocket.Conn, claims *auth.Claims) {
 			}
 		}
 	}
+}
+
+func SendWelcomeMessage(ctx context.Context, conn *websocket.Conn, claims *auth.Claims) error {
+	welcomeMsg := Message{
+		Type: "welcome",
+		Content: map[string]string{
+			"message":  "Successfully connected to secure WebSocket",
+			"username": claims.Username,
+			"userID":   claims.UserID,
+		},
+	}
+
+	result, err := json.Marshal(welcomeMsg)
+	if err != nil {
+		log.Printf("cannot read msg data: %v", err)
+		return err
+	}
+
+	if err := conn.Write(ctx, websocket.MessageText, result); err != nil {
+		log.Printf("Error sending welcome message: %v", err)
+		return err
+	}
+
+	return nil
 }

@@ -8,5 +8,8 @@ clean:
 	go clean
 	rm -f scale-websocket
 
-run:
+run-server:
 	go run ./cmd/server/main.go
+
+run-client:
+	cd ./client && npm run dev 

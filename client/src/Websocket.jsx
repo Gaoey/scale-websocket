@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 
 const WebSocketClient = () => {
   const [searchParams] = useSearchParams();
+  const [isConnected, setIsConnected] = useState(false);
   const token = searchParams.get("token");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -16,6 +17,7 @@ const WebSocketClient = () => {
 
     socket.onopen = () => {
       console.log("WebSocket connected");
+      setIsConnected(true);
     };
 
     socket.onmessage = (event) => {
@@ -46,6 +48,18 @@ const WebSocketClient = () => {
   return (
     <div style={{ padding: "2rem" }}>
       <h2>WebSocket Client</h2>
+      {isConnected && (
+        <button
+          onClick={() => {
+            if (socketRef.current && isConnected) {
+              socketRef.current.close();
+              setIsConnected(false);
+            }
+          }}
+        >
+          close websocket
+        </button>
+      )}
       <div>
         <input
           value={input}
