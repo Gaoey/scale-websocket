@@ -10,7 +10,7 @@ const WebSocketClient = () => {
 
   useEffect(() => {
     // Connect to the WebSocket server
-    console.log("Connecting to WebSocket server...");
+    console.log("Connecting websocket server...");
     const socket = new WebSocket("ws://localhost:8080/ws?token=" + token);
     socketRef.current = socket;
 
@@ -45,7 +45,7 @@ const WebSocketClient = () => {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>React WebSocket Client</h2>
+      <h2>WebSocket Client</h2>
       <div>
         <input
           value={input}
