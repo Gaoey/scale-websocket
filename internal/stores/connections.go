@@ -10,8 +10,8 @@ import (
 )
 
 type ConnectionStorage struct {
-	conns       sync.Map
-	mu          sync.RWMutex
+	conns sync.Map
+	// mu          sync.RWMutex
 	connections map[string]map[string]struct{}
 }
 
@@ -100,6 +100,7 @@ func (s *ConnectionStorage) RemoveByConnID(id string, connId string) {
 			break
 		}
 	}
+
 	s.conns.Store(id, data)
 }
 
