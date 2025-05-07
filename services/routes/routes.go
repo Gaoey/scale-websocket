@@ -11,13 +11,13 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func SetupRoutes(e *echo.Echo) {
+func SetupRoutes(e *echo.Echo, wsHandler *ws.WebSocketHandler) {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	e.GET("/health", healthcheck.HealthCheckHandler)
 	e.POST("/login", auth.LoginHandler)
-	e.GET("/auth-ws", ws.AuthWebSocketHandler)
+	e.GET("/auth-ws", wsHandler.AuthWebSocketHandler)
 
 	auth := e.Group("/api")
 	auth.Use(JWTAuth())

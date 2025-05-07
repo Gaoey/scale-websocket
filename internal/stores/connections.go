@@ -1,4 +1,4 @@
-package connections
+package stores
 
 import (
 	"sync"
