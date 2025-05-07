@@ -11,34 +11,34 @@ import (
 	"github.com/coder/websocket"
 )
 
+// TODO: TTL remove connection
+
 var (
 	PingEvent      = "ping"
 	AuthEvent      = "auth"
 	SubscribeEvent = "subscribe"
 )
 
-var (
-	OrderUpdateChannel = "order_update"
-)
-
 type AuthWebSocket struct {
-	Conn   *websocket.Conn
-	Claims *auth.Claims
-	Store  *stores.ConnectionStorage
+	ConnectionID string
+	Conn         *websocket.Conn
+	Claims       *auth.Claims
+	Store        *stores.ConnectionStorage
 }
 
-func NewAuthWebSocket(conn *websocket.Conn, claims *auth.Claims, store *stores.ConnectionStorage) *AuthWebSocket {
+func NewAuthWebSocket(ctx context.Context, conn *websocket.Conn, claims *auth.Claims, store *stores.ConnectionStorage) *AuthWebSocket {
 	connId := stores.GenerateConnectionID()
-	store.Add(claims.UserID, connId, conn, true)
+	store.Add(ctx, claims.UserID, connId, conn, true)
 
 	return &AuthWebSocket{
-		Conn:   conn,
-		Claims: claims,
-		Store:  store,
+		ConnectionID: connId,
+		Conn:         conn,
+		Claims:       claims,
+		Store:        store,
 	}
 }
 
-func (ws AuthWebSocket) EventHandler(ctx context.Context) {
+func (ws AuthWebSocket) AuthEventHandler(ctx context.Context) {
 	// Message handling loop
 	for {
 		msgType, data, err := ws.Conn.Read(ctx)
@@ -70,14 +70,23 @@ func (ws AuthWebSocket) EventHandler(ctx context.Context) {
 			ws.SendMessage(ctx, response)
 
 		case SubscribeEvent:
-			if msg.Channel == "" {
-				response := NewErrorMessage("subscribe", "1002", "Channel name is required")
+			if err := ValidateChannel(msg); err != nil {
+				response := NewErrorMessage("subscribe", "1002", err.Error())
 				ws.SendMessage(ctx, response)
+				continue
 			}
-			ws.Store.AddChannel(ws.Claims.UserID, msg.Channel)
+			ws.Store.AddChannel(ws.Claims.UserID, ws.ConnectionID, msg.Channel)
+			response := NewSuccessMessage("subscribe", map[string]interface{}{
+				"message":   "Subscribed to channel successfully",
+				"channel":   msg.Channel,
+				"timestamp": time.Now().Unix(),
+			})
+			ws.SendMessage(ctx, response)
 
 		default:
 			log.Printf("Received message of type: %s", msg.Event)
+			response := NewErrorMessage("unknown", "1003", "Unknown event type")
+			ws.SendMessage(ctx, response)
 		}
 	}
 }

@@ -58,7 +58,7 @@ func (h WebSocketHandler) AuthWebSocketHandler(c echo.Context) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	ws := NewAuthWebSocket(conn, claims, h.store)
+	ws := NewAuthWebSocket(ctx, conn, claims, h.store)
 
 	// Send welcome message
 	log.Printf("Sending welcome message to user: %s", claims.Username)
@@ -72,7 +72,7 @@ func (h WebSocketHandler) AuthWebSocketHandler(c echo.Context) error {
 		return err
 	}
 
-	ws.EventHandler(ctx)
+	ws.AuthEventHandler(ctx)
 
 	return nil
 }

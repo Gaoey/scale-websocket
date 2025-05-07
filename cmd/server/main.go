@@ -2,7 +2,9 @@ package main
 
 import (
 	"log"
+	"os"
 
+	"github.com/Gaoey/scale-websocket/internal/repository/rabbitmq"
 	"github.com/Gaoey/scale-websocket/internal/stores"
 	"github.com/Gaoey/scale-websocket/services/routes"
 	"github.com/Gaoey/scale-websocket/services/ws"
@@ -15,14 +17,33 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	// redis := os.Getenv("REDIS_URL")
-	// rabbitmq := os.Getenv("RABBITMQ_URL")
 
 	// dependency injection
+	stores := stores.NewConnectionStorage()
+	rabbitmqClient, err := rabbitmq.NewClient(rabbitmq.Config{
+		URL:          os.Getenv("RABBITMQ_URL"),
+		ExchangeName: "websocket_events",
+		ExchangeType: "fanout",
+	})
+	if err != nil {
+		log.Fatalf("Failed to initialize RabbitMQ client: %v", err)
+	}
 	e := echo.New()
-	wsHandler := ws.NewWebSocketHandler(stores.NewConnectionStorage())
 
+	wsHandler := ws.NewWebSocketHandler(stores)
 	routes.SetupRoutes(e, wsHandler)
+
+	// Consumer
+	wsOrderUpdateChannel := ws.NewWSChannel(
+		rabbitmqClient,
+		"order_update",
+		"ws_order_queue",
+		[]string{"ws_order.#"},
+		stores,
+	)
+	if err := wsOrderUpdateChannel.StartConsumer(); err != nil {
+		log.Fatalf("Failed to start order_update consumer: %v", err)
+	}
 
 	if err := e.Start(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)

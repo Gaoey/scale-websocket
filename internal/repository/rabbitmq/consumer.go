@@ -11,7 +11,7 @@ import (
 type ConsumeFunc func(Message) error
 
 // Consume starts consuming messages from a queue with the given routing keys
-func (c *Client) Consume(ctx context.Context, queueName string, routingKeys []string, handler ConsumeFunc) error {
+func (c *Client) StartConsumer(ctx context.Context, queueName string, routingKeys []string, handler ConsumeFunc) error {
 	// Declare a queue
 	q, err := c.channel.QueueDeclare(
 		queueName, // queue name

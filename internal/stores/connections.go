@@ -1,7 +1,9 @@
 package stores
 
 import (
+	"context"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
@@ -18,42 +20,57 @@ func NewConnectionStorage() *ConnectionStorage {
 }
 
 type ConnectionData struct {
+	ClientID          string
 	ConnectionID      string
+	Ctx               context.Context
 	Conn              *websocket.Conn
 	SubscribedChannel string
 	IsAuthenticated   bool
+	CreatedAt         time.Time
 }
 
-func (s *ConnectionStorage) Add(id, connId string, conn *websocket.Conn, isAuth bool) {
+func (s *ConnectionStorage) Add(ctx context.Context, id, connId string, conn *websocket.Conn, isAuth bool) {
+	newConn := ConnectionData{
+		ClientID:          id,
+		ConnectionID:      connId,
+		Ctx:               ctx,
+		Conn:              conn,
+		IsAuthenticated:   isAuth,
+		SubscribedChannel: "",
+		CreatedAt:         time.Now(),
+	}
+
 	if !s.IsExists(id) {
-		data := []ConnectionData{
-			{
-				ConnectionID:    connId,
-				Conn:            conn,
-				IsAuthenticated: isAuth,
-			},
-		}
+		data := []ConnectionData{newConn}
 		s.conns.Store(id, data)
 	} else {
 		data, _ := s.Get(id)
-		newData := append(data, ConnectionData{
-			ConnectionID:    connId,
-			Conn:            conn,
-			IsAuthenticated: isAuth,
-		})
+		newData := append(data, newConn)
 		s.conns.Store(id, newData)
 	}
 }
 
-func (s *ConnectionStorage) AddChannel(id string, channel string) {
+func (s *ConnectionStorage) AddChannel(id string, connId, channel string) {
 	data, _ := s.Get(id)
 	for i, connData := range data {
-		if connData.SubscribedChannel == "" {
+		if connData.ConnectionID == connId && connData.SubscribedChannel == "" || connData.SubscribedChannel != channel {
 			data[i].SubscribedChannel = channel
 			break
 		}
 	}
 	s.conns.Store(id, data)
+}
+
+func (s *ConnectionStorage) GetByChannel(channel string) ([]ConnectionData, error) {
+	allConns := s.GetAll()
+
+	var filteredConns []ConnectionData
+	for _, connData := range allConns {
+		if connData.SubscribedChannel == channel {
+			filteredConns = append(filteredConns, connData)
+		}
+	}
+	return filteredConns, nil
 }
 
 func (s *ConnectionStorage) Remove(id string) {
@@ -71,10 +88,10 @@ func (s *ConnectionStorage) RemoveByConnID(id string, connId string) {
 	s.conns.Store(id, data)
 }
 
-func (s *ConnectionStorage) GetAll() map[string][]ConnectionData {
-	allConns := make(map[string][]ConnectionData)
+func (s *ConnectionStorage) GetAll() []ConnectionData {
+	allConns := make([]ConnectionData, 0)
 	s.conns.Range(func(key, value interface{}) bool {
-		allConns[key.(string)] = value.([]ConnectionData)
+		allConns = append(allConns, value.([]ConnectionData)...)
 		return true
 	})
 	return allConns
