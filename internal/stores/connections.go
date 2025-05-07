@@ -10,12 +10,15 @@ import (
 )
 
 type ConnectionStorage struct {
-	conns sync.Map
+	conns       sync.Map
+	mu          sync.RWMutex
+	connections map[string]map[string]struct{}
 }
 
 func NewConnectionStorage() *ConnectionStorage {
 	return &ConnectionStorage{
-		conns: sync.Map{},
+		conns:       sync.Map{},
+		connections: make(map[string]map[string]struct{}),
 	}
 }
 
@@ -48,6 +51,7 @@ func (s *ConnectionStorage) Add(ctx context.Context, id, connId string, conn *we
 		newData := append(data, newConn)
 		s.conns.Store(id, newData)
 	}
+
 }
 
 func (s *ConnectionStorage) AddChannel(id string, connId, channel string) {
@@ -75,6 +79,17 @@ func (s *ConnectionStorage) GetByChannel(channel string) ([]ConnectionData, erro
 
 func (s *ConnectionStorage) Remove(id string) {
 	s.conns.Delete(id)
+}
+
+// GetUserForConnection returns the user ID associated with a connection ID
+func (s *ConnectionStorage) GetUserForConnection(connectionID string) string {
+	for userID, connections := range s.connections {
+		if _, exists := connections[connectionID]; exists {
+			return userID
+		}
+	}
+
+	return ""
 }
 
 func (s *ConnectionStorage) RemoveByConnID(id string, connId string) {

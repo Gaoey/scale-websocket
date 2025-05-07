@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/streadway/amqp"
@@ -20,6 +21,8 @@ func (c *Client) Publish(ctx context.Context, routingKey string, msg Message) er
 	if err != nil {
 		return fmt.Errorf("failed to marshal message: %w", err)
 	}
+
+	log.Printf("Publishing message to routing key %s: %s", routingKey, body)
 
 	err = c.channel.Publish(
 		c.ExchangeName, // exchange

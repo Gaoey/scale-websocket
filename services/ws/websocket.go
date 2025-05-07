@@ -77,9 +77,10 @@ func (ws AuthWebSocket) AuthEventHandler(ctx context.Context) {
 			}
 			ws.Store.AddChannel(ws.Claims.UserID, ws.ConnectionID, msg.Channel)
 			response := NewSuccessMessage("subscribe", map[string]interface{}{
-				"message":   "Subscribed to channel successfully",
-				"channel":   msg.Channel,
-				"timestamp": time.Now().Unix(),
+				"connection_id": ws.ConnectionID,
+				"message":       "Subscribed to channel successfully",
+				"channel":       msg.Channel,
+				"timestamp":     time.Now().Unix(),
 			})
 			ws.SendMessage(ctx, response)
 

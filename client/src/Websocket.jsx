@@ -12,7 +12,7 @@ const WebSocketClient = () => {
   useEffect(() => {
     // Connect to the WebSocket server
     console.log("Connecting websocket server...");
-    const socket = new WebSocket("ws://localhost:8080/ws?token=" + token);
+    const socket = new WebSocket("ws://localhost:8080/auth-ws?token=" + token);
     socketRef.current = socket;
 
     socket.onopen = () => {

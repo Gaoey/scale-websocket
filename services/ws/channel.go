@@ -31,32 +31,30 @@ type WSChannel struct {
 	QueueName   string
 	RoutingKeys []string
 	store       *stores.ConnectionStorage
+	ctx         context.Context
+	cancelFunc  context.CancelFunc
 }
 
 func NewWSChannel(client *rabbitmq.Client, channelName string, queueName string, routingKeys []string, store *stores.ConnectionStorage) *WSChannel {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &WSChannel{
 		Client:      client,
 		ChannelName: channelName,
 		QueueName:   queueName,
 		RoutingKeys: routingKeys,
 		store:       store,
+		ctx:         ctx,
+		cancelFunc:  cancel,
 	}
 }
 
 func (ws *WSChannel) StartConsumer() error {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() // Ensure cancel is called when the function returns
-
-	// Start consuming messages
-	err := ws.Client.StartConsumer(ctx, ws.QueueName, ws.RoutingKeys, ws.MessageHandler)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return ws.Client.StartConsumer(ws.ctx, ws.QueueName, ws.RoutingKeys, ws.MessageHandler)
 }
 
 func (ws *WSChannel) MessageHandler(msg rabbitmq.Message) error {
+
 	// transform message to type Message
 	store, err := ws.store.GetByChannel(ws.ChannelName)
 	if err != nil {
@@ -68,16 +66,35 @@ func (ws *WSChannel) MessageHandler(msg rabbitmq.Message) error {
 		return fmt.Errorf("no clients connected to channel=%s", ws.ChannelName)
 	}
 
-	// Handle incoming messages from RabbitMQ
-	data, err := json.Marshal(msg)
-	if err != nil {
-		return err
-	}
+	log.Printf("Broadcasting message to %d connections in channel %s", len(store), ws.ChannelName)
+
+	// Track connections that need to be removed
+	var brokenConnections []string
 
 	for _, c := range store {
+		// Handle incoming messages from RabbitMQ
+		data, err := json.Marshal(msg)
+		if err != nil {
+			log.Printf("Error marshaling message: %v", err)
+			continue
+		}
+
 		if err := c.Conn.Write(c.Ctx, websocket.MessageText, data); err != nil {
 			log.Printf("Failed to send message to client=%s, %v", c.ClientID, err)
+			brokenConnections = append(brokenConnections, c.ConnectionID)
 			continue
+		}
+	}
+
+	// Clean up broken connections
+	if len(brokenConnections) > 0 {
+		log.Printf("Removing %d broken connections", len(brokenConnections))
+		for _, connID := range brokenConnections {
+			// Get the user ID for this connection
+			userID := ws.store.GetUserForConnection(connID)
+			if userID != "" {
+				ws.store.RemoveByConnID(userID, connID)
+			}
 		}
 	}
 
@@ -96,4 +113,10 @@ func ValidateChannel(msg Message) error {
 	}
 
 	return fmt.Errorf("invalid channel name: %s", msg.Channel)
+}
+
+func (c *WSChannel) Stop() {
+	if c.cancelFunc != nil {
+		c.cancelFunc()
+	}
 }
