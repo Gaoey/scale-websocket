@@ -8,6 +8,7 @@ import (
 	"github.com/Gaoey/scale-websocket/internal/stores"
 	"github.com/Gaoey/scale-websocket/services/example"
 	"github.com/Gaoey/scale-websocket/services/routes"
+	"github.com/Gaoey/scale-websocket/services/store"
 	"github.com/Gaoey/scale-websocket/services/ws"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
@@ -31,10 +32,11 @@ func main() {
 	}
 	e := echo.New()
 
+	storeHandler := store.NewStoreHandler(stores)
 	exampleHandler := example.NewExampleHandler(rabbitmqClient)
 	wsHandler := ws.NewWebSocketHandler(stores)
 
-	routes.SetupRoutes(e, wsHandler, exampleHandler)
+	routes.SetupRoutes(e, wsHandler, exampleHandler, storeHandler)
 
 	// Consumer
 	wsOrderUpdateChannel := ws.NewWSChannel(
