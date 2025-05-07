@@ -5,18 +5,20 @@ import (
 	"strings"
 
 	"github.com/Gaoey/scale-websocket/services/auth"
+	"github.com/Gaoey/scale-websocket/services/example"
 	"github.com/Gaoey/scale-websocket/services/healthcheck"
 	"github.com/Gaoey/scale-websocket/services/ws"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func SetupRoutes(e *echo.Echo, wsHandler *ws.WebSocketHandler) {
+func SetupRoutes(e *echo.Echo, wsHandler *ws.WebSocketHandler, exampleHandler *example.ExampleHandler) {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
 	e.GET("/health", healthcheck.HealthCheckHandler)
 	e.POST("/login", auth.LoginHandler)
+	e.POST("/publish", exampleHandler.PublishMessage)
 	e.GET("/auth-ws", wsHandler.AuthWebSocketHandler)
 
 	auth := e.Group("/api")

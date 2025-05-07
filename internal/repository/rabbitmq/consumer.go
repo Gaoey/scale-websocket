@@ -30,7 +30,7 @@ func (c *Client) StartConsumer(ctx context.Context, queueName string, routingKey
 		err = c.channel.QueueBind(
 			q.Name,         // queue name
 			key,            // routing key
-			c.exchangeName, // exchange
+			c.ExchangeName, // exchange
 			false,          // no-wait
 			nil,            // arguments
 		)

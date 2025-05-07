@@ -19,7 +19,7 @@ const (
 type Client struct {
 	conn         *amqp.Connection
 	channel      *amqp.Channel
-	exchangeName string
+	ExchangeName string
 	url          string
 }
 
@@ -45,7 +45,7 @@ func NewClient(cfg Config) (*Client, error) {
 
 	client := &Client{
 		url:          cfg.URL,
-		exchangeName: cfg.ExchangeName,
+		ExchangeName: cfg.ExchangeName,
 	}
 
 	// Connect to RabbitMQ
@@ -109,7 +109,7 @@ func (c *Client) Reconnect(maxRetries int) error {
 			if c.channel, err = c.conn.Channel(); err == nil {
 				// Re-declare exchange
 				err = c.channel.ExchangeDeclare(
-					c.exchangeName, // exchange name
+					c.ExchangeName, // exchange name
 					"topic",        // exchange type
 					true,           // durable
 					false,          // auto-deleted

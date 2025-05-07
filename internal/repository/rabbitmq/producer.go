@@ -22,7 +22,7 @@ func (c *Client) Publish(ctx context.Context, routingKey string, msg Message) er
 	}
 
 	err = c.channel.Publish(
-		c.exchangeName, // exchange
+		c.ExchangeName, // exchange
 		routingKey,     // routing key
 		false,          // mandatory
 		false,          // immediate
