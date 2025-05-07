@@ -57,7 +57,7 @@ const WebSocketClient = () => {
             }
           }}
         >
-          close websocket
+          close
         </button>
       )}
       <div>

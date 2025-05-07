@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Gaoey/scale-websocket/internal/auth"
-	"github.com/Gaoey/scale-websocket/internal/healthcheck"
-	"github.com/Gaoey/scale-websocket/internal/socket"
+	"github.com/Gaoey/scale-websocket/services/auth"
+	"github.com/Gaoey/scale-websocket/services/healthcheck"
+	"github.com/Gaoey/scale-websocket/services/ws"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -17,10 +17,11 @@ func SetupRoutes(e *echo.Echo) {
 
 	e.GET("/health", healthcheck.HealthCheckHandler)
 	e.POST("/login", auth.LoginHandler)
-	e.GET("/ws", socket.WebSocketHandler)
+	e.GET("/auth-ws", ws.AuthWebSocketHandler)
 
 	auth := e.Group("/api")
 	auth.Use(JWTAuth())
+	// API auth list
 }
 
 // JWTAuth middleware for JWT authentication
