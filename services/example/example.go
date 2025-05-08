@@ -4,13 +4,12 @@ import (
 	"net/http"
 
 	"github.com/Gaoey/scale-websocket/internal/repository/rabbitmq"
-	"github.com/Gaoey/scale-websocket/services/ws"
 	"github.com/labstack/echo/v4"
 )
 
 type BodyPayload struct {
-	RoutingKey string     `json:"routing_key"`
-	Message    ws.Message `json:"message"`
+	RoutingKey string      `json:"routing_key"`
+	Message    interface{} `json:"message"`
 }
 
 type ExampleHandler struct {

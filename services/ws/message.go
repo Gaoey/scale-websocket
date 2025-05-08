@@ -3,7 +3,7 @@ package ws
 // Message represents a WebSocket message
 type Message struct {
 	Event   string      `json:"event"`
-	Status  string      `json:"status"`
+	Status  string      `json:"status,omitempty"`
 	Data    interface{} `json:"data"`
 	Channel string      `json:"channel,omitempty"`
 }

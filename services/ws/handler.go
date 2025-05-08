@@ -55,7 +55,7 @@ func (h WebSocketHandler) AuthWebSocketHandler(c echo.Context) error {
 	defer conn.Close(websocket.StatusNormalClosure, "Connection closed")
 
 	// Set read timeout and message size limit
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Hour)
 	defer cancel()
 
 	ws := NewAuthWebSocket(ctx, conn, claims, h.store)

@@ -68,17 +68,18 @@ func (ws *WSChannel) MessageHandler(msg rabbitmq.Message) error {
 
 	log.Printf("Broadcasting message to %d connections in channel %s", len(store), ws.ChannelName)
 
+	res := NewSuccessMessage("update", msg)
+	// Handle incoming messages from RabbitMQ
+	data, err := json.Marshal(res)
+	if err != nil {
+		log.Printf("Error marshaling message: %v", err)
+		return fmt.Errorf("cannot marshaling message")
+	}
+
 	// Track connections that need to be removed
 	var brokenConnections []string
 
 	for _, c := range store {
-		// Handle incoming messages from RabbitMQ
-		data, err := json.Marshal(msg)
-		if err != nil {
-			log.Printf("Error marshaling message: %v", err)
-			continue
-		}
-
 		if err := c.Conn.Write(c.Ctx, websocket.MessageText, data); err != nil {
 			log.Printf("Failed to send message to client=%s, %v", c.ClientID, err)
 			brokenConnections = append(brokenConnections, c.ConnectionID)

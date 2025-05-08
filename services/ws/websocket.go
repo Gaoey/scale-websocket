@@ -43,6 +43,8 @@ func (ws AuthWebSocket) AuthEventHandler(ctx context.Context) {
 	for {
 		msgType, data, err := ws.Conn.Read(ctx)
 		if err != nil {
+			log.Printf("Connection %s disconnected: %v", ws.ConnectionID, err)
+			ws.Store.RemoveByConnID(ws.Claims.UserID, ws.ConnectionID)
 			if websocket.CloseStatus(err) != websocket.StatusNormalClosure {
 				log.Printf("WebSocket read error: %v", err)
 			}
