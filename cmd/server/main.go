@@ -29,6 +29,8 @@ func main() {
 	stores := stores.NewConnectionStorage()
 	fmt.Printf("config rabbit: %v\n", os.Getenv("RABBITMQ_URL"))
 
+	serverName := os.Getenv("SERVER_NAME")
+
 	rabbitmqClient, err := rabbitmq.NewClient(rabbitmq.Config{
 		URL:          os.Getenv("RABBITMQ_URL"),
 		ExchangeName: "ws_events",
@@ -46,11 +48,12 @@ func main() {
 	routes.SetupRoutes(e, wsHandler, exampleHandler, storeHandler)
 
 	// Consumer
+	queueName := fmt.Sprintf("ws.order.update.%s", serverName)
 	wsOrderUpdateChannel := ws.NewWSChannel(
 		rabbitmqClient,
-		"order_update",
-		"ws_order_queue",
-		[]string{"ws_order.update"},
+		ws.OrderUpdateChannel,
+		queueName,
+		[]string{"ws.order.update.*"},
 		stores,
 	)
 

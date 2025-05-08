@@ -11,18 +11,12 @@ import (
 	"github.com/coder/websocket"
 )
 
-type ChannelQueue struct {
-	ChannelName string
-	QueueName   string
-	RoutingKeys []string
-}
+var (
+	OrderUpdateChannel = "order_update"
+)
 
 var (
-	CHANNELS = []ChannelQueue{{
-		ChannelName: "order_update",
-		QueueName:   "ws_order_queue",
-		RoutingKeys: []string{"ws_order.#"},
-	}}
+	CHANNELS = []string{OrderUpdateChannel}
 )
 
 type WSChannel struct {
@@ -106,7 +100,7 @@ func ValidateChannel(msg Message) error {
 	}
 
 	for _, channel := range CHANNELS {
-		if msg.Channel == channel.ChannelName {
+		if msg.Channel == channel {
 			return nil
 		}
 	}
