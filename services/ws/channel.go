@@ -66,9 +66,7 @@ func (ws *WSChannel) MessageHandler(msg rabbitmq.Message) error {
 		return fmt.Errorf("no clients connected to channel=%s", ws.ChannelName)
 	}
 
-	log.Printf("Broadcasting message to %d connections in channel %s", len(store), ws.ChannelName)
-
-	res := NewSuccessMessage("update", msg)
+	res := NewSuccessMessage(ws.ChannelName, msg)
 	// Handle incoming messages from RabbitMQ
 	data, err := json.Marshal(res)
 	if err != nil {
